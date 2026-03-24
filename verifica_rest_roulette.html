@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verifica – Server REST Roulette</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #f5f2ec;
+      --surface:   #ffffff;
+      --border:    #ddd8ce;
+      --accent:    #8b3a2a;
+      --accent2:   #c0392b;
+      --green:     #2e7d5e;
+      --blue:      #2c5f9e;
+      --text:      #2a2520;
+      --muted:     #7a726a;
+      --mono-bg:   #f0ece4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-weight: 300;
+      line-height: 1.85;
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      overflow: hidden;
+      padding: 70px 60px 60px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #fff8f0 0%, #f5f2ec 60%, #efe8de 100%);
+    }
+
+    header::before {
+      content: '◈';
+      position: absolute;
+      right: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 220px;
+      color: rgba(139,58,42,0.07);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .label {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 12px;
+      margin-bottom: 28px;
+      border-radius: 2px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 5vw, 68px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      max-width: 700px;
+      margin-bottom: 18px;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 540px;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 40px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-item small {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .meta-item strong {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 60px;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      padding: 64px 0 0;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    section:nth-child(1) { animation-delay: 0.05s; }
+    section:nth-child(2) { animation-delay: 0.12s; }
+    section:nth-child(3) { animation-delay: 0.19s; }
+    section:nth-child(4) { animation-delay: 0.26s; }
+    section:nth-child(5) { animation-delay: 0.33s; }
+    section:nth-child(6) { animation-delay: 0.40s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 28px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--accent);
+      margin: 36px 0 14px;
+    }
+
+    p {
+      font-size: 16px;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+
+    /* ── REGOLE COLORI ── */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 32px 0;
+    }
+
+    .rule-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 28px 24px;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .rule-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    .rule-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .rule-card.ROSSO::before  { background: var(--accent2); }
+    .rule-card.NERO::before   { background: #444; }
+
+    .rule-card .color-dot {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rule-card.ROSSO .color-dot { background: var(--accent2); color: #fff; }
+    .rule-card.NERO .color-dot { background: #333;           color: #eee; }
+
+    .rule-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .rule-card p {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* ── PARAMETRI ── */
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 15px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .param-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #faf7f2;
+    }
+
+    .param-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .param-table tr:last-child td { border-bottom: none; }
+    .param-table tr:hover td { background: #fdf9f4; }
+
+    .param-name {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .param-vals {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--green);
+    }
+
+    /* ── CODICE ── */
+    .code-block {
+      background: var(--mono-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 24px 28px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #3a3028;
+      white-space: pre;
+    }
+
+    .code-block .kw  { color: var(--accent); }
+    .code-block .val { color: var(--green); }
+    .code-block .str { color: #b94a38; }
+    .code-block .cmt { color: #aaa090; font-style: italic; }
+    .code-block .url { color: var(--blue); }
+
+    .code-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* ── ESEMPIO CARD ── */
+    .example-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 28px 0;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .example-card-header {
+      background: #f5f0e8;
+      padding: 12px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .example-card-header .method {
+      background: var(--accent2);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-weight: 600;
+      font-size: 10px;
+    }
+
+    .example-card-header .method.post {
+      background: var(--blue);
+    }
+
+    .example-card-body {
+      padding: 24px;
+    }
+
+    /* ── RISPOSTA JSON ── */
+    .response-block {
+      background: var(--mono-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 4px;
+      padding: 22px 26px;
+      margin: 20px 0;
+    }
+
+    .response-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      line-height: 1.8;
+      color: #3a3028;
+    }
+
+    /* ── NOTE BOX ── */
+    .note-box {
+      background: #fff8f0;
+      border: 1px solid #e8d8c0;
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 22px 26px;
+      margin: 28px 0;
+    }
+
+    .note-box .note-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .note-box p {
+      font-size: 15px;
+      margin: 0;
+      color: #6a5a48;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 80px;
+      border-top: 1px solid var(--border);
+      padding: 30px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #eeeae2;
+    }
+
+    footer p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 56px 0 0;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      header { padding: 50px 24px 44px; }
+      main   { padding: 0 24px; }
+      footer { padding: 24px; }
+      header::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header>
+  <div class="label">Verifica Pratica · Informatica</div>
+  <h1>Server REST<br /><span>Roulette</span></h1>
+  <p class="subtitle">Implementazione di un servizio web RESTful per la gestione delle vincite alla roulette, tramite richieste GET e POST.</p>
+  <div class="meta-row">
+    <div class="meta-item">
+      <small>Progetto NetBeans</small>
+      <strong>ServerRest-Verifica</strong>
+    </div>
+    <div class="meta-item">
+      <small>Endpoint base</small>
+      <strong>/api/roulette/paridispari</strong>
+    </div>
+    <div class="meta-item">
+      <small>Porta locale</small>
+      <strong>8080</strong>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<main>
+
+  <!-- 1 · OBIETTIVO -->
+  <section>
+    <p class="section-label">01 — Obiettivo</p>
+    <h2>Cosa devi realizzare</h2>
+    <p>
+      Il progetto NetBeans <strong>ServerRest-Verifica</strong> contiene già lo scheletro dell'applicazione.
+      Il tuo compito è <strong>completare l'implementazione</strong> delle classi e dei metodi necessari
+      affinché il server sia in grado di ricevere una richiesta, analizzarla e restituire
+      al client la risposta corretta in formato JSON.
+    </p>
+    <p>
+      In sintesi, il server deve ricevere due informazioni — la puntata del giocatore e il numero
+      estratto dalla roulette — e decidere se il giocatore ha vinto oppure no, restituendo
+      il risultato strutturato come oggetto JSON.
+    </p>
+
+    <div class="note-box">
+      <div class="note-title">⚑ Attenzione</div>
+      <p>Non modificare la struttura del progetto né i file già predisposti, se non nei punti
+         indicati come da completare. Lavora esclusivamente all'interno del progetto <em>ServerRest-Verifica</em>.</p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- 2 · REGOLE DI GIOCO -->
+  <section>
+    <p class="section-label">02 — Logica di Gioco</p>
+    <h2>Le regole della Roulette</h2>
+    <p>
+      La logica che determina la vittoria dipende esclusivamente dal numero estratto.
+      Esistono due possibili esiti, ciascuno legato a una condizione matematica sul numero:
+    </p>
+
+    <div class="rules-grid">
+      <div class="rule-card rosso">
+        <div class="color-dot">R</div>
+        <h4>DISPARI</h4>
+        <p>Vince se il numero estratto è <strong style="color:var(--accent2)">dispari</strong> (e quindi diverso da 0).</p>
+      </div>
+      <div class="rule-card nero">
+        <div class="color-dot">N</div>
+        <h4>PARI</h4>
+        <p>Vince se il numero estratto è <strong style="color:#aaa">pari</strong> e diverso da 0.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- 3 · PARAMETRI -->
+  <section>
+    <p class="section-label">03 — Parametri</p>
+    <h2>I dati in ingresso</h2>
+    <p>
+      Il server accetta <strong>due parametri obbligatori</strong>, sia nelle richieste GET (come
+      parametri nella URL) sia nelle richieste POST (come campi del payload JSON):
+    </p>
+
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>Parametro</th>
+          <th>Tipo</th>
+          <th>Valori accettati</th>
+          <th>Descrizione</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="param-name">giocata</span></td>
+          <td style="color:var(--muted);font-size:14px">String</td>
+          <td><span class="param-vals">"DISPARI" | "PARI"</span></td>
+          <td style="font-size:14px;color:var(--muted)">La puntata effettuata dal giocatore</td>
+        </tr>
+        <tr>
+          <td><span class="param-name">numero</span></td>
+          <td style="color:var(--muted);font-size:14px">String (intero)</td>
+          <td><span class="param-vals">"0" … "36"</span></td>
+          <td style="font-size:14px;color:var(--muted)">Il numero estratto dalla roulette</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      <div class="note-title">Conversione del numero</div>
+      <p>Il parametro <em>numero</em> arriva sempre come stringa. Dovrai convertirlo in intero
+         per poter applicare la logica di parità/disparità.</p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- 4 · GET -->
+  <section>
+    <p class="section-label">04 — Metodo GET</p>
+    <h2>Richiesta GET</h2>
+    <p>
+      L'endpoint GET si trova al percorso <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">/api/roulette/paridispari/get</code>.
+      I parametri vengono passati direttamente nella URL tramite la sintassi <em>query string</em>
+      (il punto interrogativo seguito da coppie chiave=valore separate da <code style="font-family:'JetBrains Mono',monospace">&amp;</code>).
+    </p>
+
+    <h3>Esempi di URL valide</h3>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata sul DISPARI — numero 12
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/roulette/paridispari/get</span>?<span class="kw">giocata</span>=<span class="str">DISPARI</span>&amp;<span class="kw">numero</span>=<span class="str">12</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>  : <span style="color:#b94a38">"DISPARI"</span>,
+  <span style="color:var(--accent)">"numero"</span>   : <span style="color:#b94a38">12</span>,
+  <span style="color:var(--accent)">"vittoria"</span> : <span style="color:var(--accent2)">false</span>   <span style="color:#aaa090">// 12 è pari → il DISPARI perde</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata sul PARI — numero 12
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/roulette/paridispari/get</span>?<span class="kw">giocata</span>=<span class="str">PARI</span>&amp;<span class="kw">numero</span>=<span class="str">12</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>  : <span style="color:#b94a38">"PARI"</span>,
+  <span style="color:var(--accent)">"numero"</span>   : <span style="color:#b94a38">12</span>,
+  <span style="color:var(--accent)">"vittoria"</span> : <span style="color:var(--green)">true</span>    <span style="color:#aaa090">// 12 è pari → il PARI vince</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata sul DISPARI — numero 0 (caso speciale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/roulette/paridispari/get</span>?<span class="kw">giocata</span>=<span class="str">DISPARI</span>&amp;<span class="kw">numero</span>=<span class="str">0</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>  : <span style="color:#b94a38">"DISPARI"</span>,
+  <span style="color:var(--accent)">"numero"</span>   : <span style="color:#b94a38">0</span>,
+  <span style="color:var(--accent)">"vittoria"</span> : <span style="color:var(--accent2)">false</span>   <span style="color:#aaa090">// 0 non è dispari → il DISPARI perde</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- 5 · POST -->
+  <section>
+    <p class="section-label">05 — Metodo POST</p>
+    <h2>Richiesta POST</h2>
+    <p>
+      L'endpoint POST si trova al percorso <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">/api/roulette/paridispari/post</code>.
+      In questo caso i parametri <strong>non</strong> vengono inseriti nella URL, ma inviati nel
+      corpo della richiesta (<em>body</em>) come oggetto JSON, con Content-Type
+      <code style="font-family:'JetBrains Mono',monospace">application/json</code>.
+    </p>
+
+    <h3>Struttura del payload JSON</h3>
+    <div class="code-block">
+      <pre>{
+  <span class="kw">"giocata"</span> : <span class="str">"DISPARI"</span>,
+  <span class="kw">"numero"</span>  : <span class="str">12</span>
+}</pre>
+    </div>
+
+    <h3>Esempi completi POST</h3>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method post">POST</span>
+        Puntata sul DISPARI — numero 7
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/roulette/paridispari/post</span></pre>
+        </div>
+        <span class="code-label">Body (JSON inviato)</span>
+        <div class="code-block">
+          <pre>{
+  <span class="kw">"giocata"</span> : <span class="str">"DISPARI"</span>,
+  <span class="kw">"numero"</span>  : <span class="str">7</span>
+}</pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>  : <span style="color:#b94a38">"DISPARI"</span>,
+  <span style="color:var(--accent)">"numero"</span>   : <span style="color:#b94a38">7</span>,
+  <span style="color:var(--accent)">"vittoria"</span> : <span style="color:var(--green)">true</span>    <span style="color:#aaa090">// 7 è dispari → il DISPARI vince</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- 6 · STRUTTURA RISPOSTA -->
+  <section>
+    <p class="section-label">06 — Risposta</p>
+    <h2>Struttura della risposta JSON</h2>
+    <p>
+      Qualsiasi richiesta — GET o POST — deve sempre produrre una risposta JSON con esattamente
+      <strong>tre campi</strong>, nell'ordine indicato di seguito:
+    </p>
+
+    <div class="response-block" style="margin-top:24px;">
+      <pre>{
+  <span style="color:var(--accent)">"giocata"</span>  : <span style="color:#b94a38">"&lt;la puntata ricevuta&gt;"</span>,
+  <span style="color:var(--accent)">"numero"</span>   : <span style="color:#b94a38">&lt;il numero ricevuto&gt;</span>,
+  <span style="color:var(--accent)">"vittoria"</span> : <span style="color:var(--green)">true</span> <span style="color:#aaa090">oppure</span> <span style="color:var(--accent2)">false</span>
+}</pre>
+    </div>
+
+    <p style="margin-top:20px;">
+      Il campo <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">vittoria</code>
+      deve essere restituito come <strong>stringa</strong> contenente il valore booleano
+      (<em>"true"</em> o <em>"false"</em>), non come valore booleano nativo JSON.
+      Tutti e tre i valori devono essere restituiti esattamente come ricevuti (giocata e numero)
+      o calcolati (vittoria).
+    </p>
+
+    <div class="note-box">
+      <div class="note-title">Tabella di verità rapida</div>
+      <p>
+        DISPARI + dispari (≠0) → <span style="color:var(--green)">true</span> &nbsp;|&nbsp;
+        DISPARI + pari o 0 → <span style="color:var(--accent2)">false</span><br/>
+        PARI &nbsp;+ pari (≠0) → <span style="color:var(--green)">true</span> &nbsp;|&nbsp;
+        PARI &nbsp;+ dispari o 0 → <span style="color:var(--accent2)">false</span>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════ PARTE AVANZATA ═══════════════════ -->
+<div style="background:linear-gradient(135deg,#1a0a08 0%,#2a1008 50%,#1a0a08 100%);border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);margin-top:80px;padding:48px 60px;">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:260px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Sezione Avanzata</div>
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:#fff;line-height:1.1;">Parte II<br/><span style="color:var(--accent)">API v2 — Colori</span></div>
+    </div>
+    <div style="flex:2;min-width:260px;">
+      <p style="color:#c0a890;font-size:15px;margin:0;">La versione 2 delle API introduce la logica <strong style="color:#fff">reale della roulette</strong>: i numeri rossi e neri non seguono più la semplice regola pari/dispari, ma corrispondono alla distribuzione autentica del tavolo da gioco. L'endpoint cambia da <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">paridispari</code> a <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">colori</code>.</p>
+    </div>
+  </div>
+</div>
+
+<main style="max-width:900px;margin:0 auto;padding:0 60px;">
+
+  <!-- A · NUOVE REGOLE -->
+  <section style="padding:64px 0 0;animation:fadeUp 0.7s ease both;">
+    <p class="section-label">A — Logica di Gioco v2</p>
+    <h2>Le regole reali della Roulette</h2>
+    <p>
+      Nella versione 2, la vittoria non dipende più dalla parità del numero, ma dall'appartenenza
+      del numero estratto ai due insiemi fissi del tavolo da roulette. I numeri rossi e neri
+      sono distribuiti in modo asimmetrico e <strong>non corrispondono</strong> alla semplice
+      alternanza pari/dispari.
+    </p>
+
+    <div class="rules-grid">
+      <div class="rule-card ROSSO">
+        <div class="color-dot">R</div>
+        <h4>ROSSO</h4>
+        <p>Vince se il numero estratto appartiene all'insieme dei <strong style="color:var(--accent2)">18 numeri rossi</strong> della roulette.</p>
+      </div>
+      <div class="rule-card NERO">
+        <div class="color-dot">N</div>
+        <h4>NERO</h4>
+        <p>Vince se il numero estratto appartiene all'insieme dei <strong style="color:#888">18 numeri neri</strong> della roulette.</p>
+      </div>
+    </div>
+
+    <!-- Tabelle numeri -->
+    <h3>Insiemi di numeri</h3>
+    <p>I numeri associati a ciascun colore sono i seguenti. Il server dovrà verificare l'appartenenza del numero estratto all'insieme corrispondente alla giocata ricevuta.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:28px 0;">
+
+      <!-- Numeri ROSSI -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent2);border-radius:4px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent2);margin-bottom:14px;">Numeri Rossi (18)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">1</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">3</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">5</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">7</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">9</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">12</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">14</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">16</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">18</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">19</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">21</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">23</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">25</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">27</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">30</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">32</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">34</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#fdf0ee;border:1px solid #f0c0b8;color:var(--accent2);padding:3px 9px;border-radius:3px;font-weight:600;">36</span>
+        </div>
+      </div>
+
+      <!-- Numeri NERI -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #444;border-radius:4px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#777;margin-bottom:14px;">Numeri Neri (18)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">2</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">4</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">6</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">8</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">10</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">11</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">13</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">15</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">17</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">20</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">22</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">24</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">26</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">28</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">29</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">31</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">33</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#f0f0f0;border:1px solid #ccc;color:#333;padding:3px 9px;border-radius:3px;font-weight:600;">35</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <div class="note-title">⚑ Differenza chiave rispetto alla v1</div>
+      <p>
+        In v1 il numero 12 fa vincere il PARI (è pari). In v2, invece, il 12 è un numero
+        <strong>ROSSO</strong> nella roulette reale, quindi fa vincere chi ha puntato su ROSSO e
+        perdere chi ha puntato su NERO. La logica non è più matematica ma si basa su
+        una <strong>ricerca nell'insieme</strong> dei numeri del proprio colore.
+      </p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- B · ENDPOINT v2 -->
+  <section style="padding:64px 0 0;animation:fadeUp 0.7s ease both;">
+    <p class="section-label">B — Endpoint v2</p>
+    <h2>URL delle API v2</h2>
+    <p>
+      Gli endpoint della versione 2 hanno la stessa struttura della v1, con l'unica differenza
+      nel segmento del percorso: <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">paridispari</code>
+      diventa <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">colori</code>.
+      Rispetto alla v1, la v2 introduce un <strong>nuovo parametro obbligatorio in ingresso</strong>
+      (<code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">importo</code>)
+      e due <strong>nuovi campi nella risposta</strong>
+      (<code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">importogiocato</code> e
+      <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">importoriscosso</code>).
+    </p>
+
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>Metodo</th>
+          <th>Endpoint v2</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="param-name">GET</span></td>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue)">/api/v2/roulette/colori/get</span></td>
+          <td style="font-size:14px;color:var(--muted)">Parametri in query string</td>
+        </tr>
+        <tr>
+          <td><span class="param-name">POST</span></td>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue)">/api/v2/roulette/colori/post</span></td>
+          <td style="font-size:14px;color:var(--muted)">Parametri nel body JSON</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Parametri v2</h3>
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>Parametro</th>
+          <th>Tipo</th>
+          <th>Dove</th>
+          <th>Descrizione</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="param-name">giocata</span></td>
+          <td style="color:var(--muted);font-size:14px">String</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">GET & POST</td>
+          <td style="font-size:14px;color:var(--muted)">Il colore puntato: <span style="font-family:'JetBrains Mono',monospace;color:var(--green)">"ROSSO" | "NERO"</span></td>
+        </tr>
+        <tr>
+          <td><span class="param-name">numero</span></td>
+          <td style="color:var(--muted);font-size:14px">String (intero)</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">GET & POST</td>
+          <td style="font-size:14px;color:var(--muted)">Il numero estratto dalla roulette: <span style="font-family:'JetBrains Mono',monospace;color:var(--green)">"0" … "36"</span></td>
+        </tr>
+        <tr>
+          <td><span class="param-name">importo</span></td>
+          <td style="color:var(--muted);font-size:14px"><strong style="color:var(--accent)">float</strong></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">GET & POST</td>
+          <td style="font-size:14px;color:var(--muted)">L'importo della giocata in euro, con decimali (es. <span style="font-family:'JetBrains Mono',monospace;color:var(--green)">50.00</span>)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Campi della risposta v2</h3>
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>Campo</th>
+          <th>Tipo</th>
+          <th>Descrizione</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="param-name">giocata</span></td>
+          <td style="color:var(--muted);font-size:14px">String</td>
+          <td style="font-size:14px;color:var(--muted)">Il colore puntato, restituito così com'è</td>
+        </tr>
+        <tr>
+          <td><span class="param-name">numero</span></td>
+          <td style="color:var(--muted);font-size:14px">int</td>
+          <td style="font-size:14px;color:var(--muted)">Il numero estratto, restituito così com'è</td>
+        </tr>
+        <tr>
+          <td><span class="param-name">vittoria</span></td>
+          <td style="color:var(--muted);font-size:14px"><strong style="color:var(--accent)">boolean</strong></td>
+          <td style="font-size:14px;color:var(--muted)">Esito della giocata: <span style="font-family:'JetBrains Mono',monospace;color:var(--green)">true</span> oppure <span style="font-family:'JetBrains Mono',monospace;color:var(--accent2)">false</span></td>
+        </tr>
+        <tr>
+          <td><span class="param-name">importogiocato</span></td>
+          <td style="color:var(--muted);font-size:14px"><strong style="color:var(--accent)">float</strong></td>
+          <td style="font-size:14px;color:var(--muted)">L'importo ricevuto in ingresso, restituito invariato</td>
+        </tr>
+        <tr>
+          <td><span class="param-name">importoriscosso</span></td>
+          <td style="color:var(--muted);font-size:14px"><strong style="color:var(--accent)">float</strong></td>
+          <td style="font-size:14px;color:var(--muted)">In caso di vittoria: <code style="font-family:'JetBrains Mono',monospace">importo × 2</code> &nbsp;|&nbsp; In caso di sconfitta: <code style="font-family:'JetBrains Mono',monospace">0.0</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- C · ESEMPI v2 GET -->
+  <section style="padding:64px 0 0;animation:fadeUp 0.7s ease both;">
+    <p class="section-label">C — Esempi GET v2</p>
+    <h2>Richieste GET — versione 2</h2>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata su ROSSO — numero 12 (ROSSO nella roulette reale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/v2/roulette/colori/get</span>?<span class="kw">giocata</span>=<span class="str">ROSSO</span>&amp;<span class="kw">numero</span>=<span class="str">12</span>&amp;<span class="kw">importo</span>=<span class="str">50.00</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>       : <span style="color:#b94a38">"ROSSO"</span>,
+  <span style="color:var(--accent)">"numero"</span>        : <span style="color:#b94a38">12</span>,
+  <span style="color:var(--accent)">"vittoria"</span>      : <span style="color:var(--green)">true</span>,
+  <span style="color:var(--accent)">"importogiocato"</span>: <span style="color:var(--blue)">50.00</span>,
+  <span style="color:var(--accent)">"importoriscosso"</span>: <span style="color:var(--green)">100.00</span>  <span style="color:#aaa090">// vittoria → importo × 2</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata su NERO — numero 12 (ROSSO nella roulette reale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/v2/roulette/colori/get</span>?<span class="kw">giocata</span>=<span class="str">NERO</span>&amp;<span class="kw">numero</span>=<span class="str">12</span>&amp;<span class="kw">importo</span>=<span class="str">50.00</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>       : <span style="color:#b94a38">"NERO"</span>,
+  <span style="color:var(--accent)">"numero"</span>        : <span style="color:#b94a38">12</span>,
+  <span style="color:var(--accent)">"vittoria"</span>      : <span style="color:var(--accent2)">false</span>,
+  <span style="color:var(--accent)">"importogiocato"</span>: <span style="color:var(--blue)">50.00</span>,
+  <span style="color:var(--accent)">"importoriscosso"</span>: <span style="color:var(--accent2)">0.0</span>     <span style="color:#aaa090">// sconfitta → 0.0</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method">GET</span>
+        Puntata su NERO — numero 11 (NERO nella roulette reale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL della richiesta</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/v2/roulette/colori/get</span>?<span class="kw">giocata</span>=<span class="str">NERO</span>&amp;<span class="kw">numero</span>=<span class="str">11</span>&amp;<span class="kw">importo</span>=<span class="str">50.00</span></pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>       : <span style="color:#b94a38">"NERO"</span>,
+  <span style="color:var(--accent)">"numero"</span>        : <span style="color:#b94a38">11</span>,
+  <span style="color:var(--accent)">"vittoria"</span>      : <span style="color:var(--green)">true</span>,
+  <span style="color:var(--accent)">"importogiocato"</span>: <span style="color:var(--blue)">50.00</span>,
+  <span style="color:var(--accent)">"importoriscosso"</span>: <span style="color:var(--green)">100.00</span>  <span style="color:#aaa090">// vittoria → importo × 2</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- D · ESEMPI v2 POST -->
+  <section style="padding:64px 0 0;animation:fadeUp 0.7s ease both;">
+    <p class="section-label">D — Esempi POST v2</p>
+    <h2>Richieste POST — versione 2</h2>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method post">POST</span>
+        Puntata su ROSSO — numero 9 (ROSSO nella roulette reale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">URL</span>
+        <div class="code-block">
+          <pre><span class="url">http://localhost:8080/api/v2/roulette/colori/post</span></pre>
+        </div>
+        <span class="code-label">Body (JSON inviato)</span>
+        <div class="code-block">
+          <pre>{
+  <span class="kw">"giocata"</span>  : <span class="str">"ROSSO"</span>,
+  <span class="kw">"numero"</span>   : <span class="str">9</span>,
+  <span class="kw">"importo"</span>  : <span class="str">25.50</span>
+}</pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>       : <span style="color:#b94a38">"ROSSO"</span>,
+  <span style="color:var(--accent)">"numero"</span>        : <span style="color:#b94a38">9</span>,
+  <span style="color:var(--accent)">"vittoria"</span>      : <span style="color:var(--green)">true</span>,
+  <span style="color:var(--accent)">"importogiocato"</span>: <span style="color:var(--blue)">25.50</span>,
+  <span style="color:var(--accent)">"importoriscosso"</span>: <span style="color:var(--green)">51.00</span>  <span style="color:#aaa090">// vittoria → 25.50 × 2</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-card-header">
+        <span class="method post">POST</span>
+        Puntata su ROSSO — numero 10 (NERO nella roulette reale)
+      </div>
+      <div class="example-card-body">
+        <span class="code-label">Body (JSON inviato)</span>
+        <div class="code-block">
+          <pre>{
+  <span class="kw">"giocata"</span>  : <span class="str">"ROSSO"</span>,
+  <span class="kw">"numero"</span>   : <span class="str">10</span>,
+  <span class="kw">"importo"</span>  : <span class="str">25.50</span>
+}</pre>
+        </div>
+        <span class="code-label">Risposta JSON attesa</span>
+        <div class="response-block">
+          <pre>{
+  <span style="color:var(--accent)">"giocata"</span>       : <span style="color:#b94a38">"ROSSO"</span>,
+  <span style="color:var(--accent)">"numero"</span>        : <span style="color:#b94a38">10</span>,
+  <span style="color:var(--accent)">"vittoria"</span>      : <span style="color:var(--accent2)">false</span>,
+  <span style="color:var(--accent)">"importogiocato"</span>: <span style="color:var(--blue)">25.50</span>,
+  <span style="color:var(--accent)">"importoriscosso"</span>: <span style="color:var(--accent2)">0.0</span>     <span style="color:#aaa090">// sconfitta → 0.0</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- E · TABELLA DI VERITÀ v2 -->
+  <section style="padding:64px 0 0;animation:fadeUp 0.7s ease both;">
+    <p class="section-label">E — Riepilogo v2</p>
+    <h2>Logica di verifica</h2>
+    <p>
+      L'implementazione del metodo di controllo dovrà effettuare una <strong>ricerca per appartenenza</strong>
+      all'interno di due strutture dati che contengono i numeri di ciascun colore,
+      anziché un calcolo matematico di parità. Il numero ricevuto come stringa
+      va prima convertito in intero, poi cercato nell'insieme del colore puntato.
+    </p>
+
+    <div class="note-box">
+      <div class="note-title">Tabella di verità v2</div>
+      <p>
+        ROSSO + numero ∈ {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36} → vittoria <span style="color:var(--green)">true</span><br/>
+        ROSSO + qualsiasi altro numero → vittoria <span style="color:var(--accent2)">false</span><br/>
+        NERO &nbsp;+ numero ∈ {2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35} → vittoria <span style="color:var(--green)">true</span><br/>
+        NERO &nbsp;+ qualsiasi altro numero → vittoria <span style="color:var(--accent2)">false</span>
+      </p>
+      <p style="margin-top:14px;">
+        <strong>importogiocato</strong> = valore di <code style="font-family:'JetBrains Mono',monospace">importo</code> ricevuto in ingresso (invariato)<br/>
+        <strong>importoriscosso</strong> = <code style="font-family:'JetBrains Mono',monospace">importo × 2</code> se vittoria <span style="color:var(--green)">true</span> &nbsp;|&nbsp; <code style="font-family:'JetBrains Mono',monospace">0.0</code> se vittoria <span style="color:var(--accent2)">false</span>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer>
+  <p>Progetto: <span style="color:var(--accent)">ServerRest-Verifica</span> &nbsp;·&nbsp; NetBeans IDE</p>
+  <p>
+    v1: <span style="color:var(--accent)">http://localhost:8080/api/roulette/paridispari</span>
+    &nbsp;·&nbsp;
+    v2: <span style="color:var(--accent)">http://localhost:8080/api/roulette/colori</span>
+  </p>
+</footer>
+
+</body>
+</html>
