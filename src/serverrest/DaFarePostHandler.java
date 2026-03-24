@@ -61,10 +61,10 @@ public class DaFarePostHandler implements HttpHandler {
             if (!validazioneParametri(request)) {
                 inviaErrore(exchange, 400, "Operatore mancante o vuoto");
                 return;
-            }
+            };
             
             // Chiama la logica di calcolo DA FARE
-            Boolean vittoria = DaFareService.logicaDiCalcolo()(
+            Boolean vittoria = DaFareService.logicaDiCalcolo(
                 request.getGiocata(),
                 request.getNumero()
             );
@@ -92,8 +92,11 @@ public class DaFarePostHandler implements HttpHandler {
     
     // Validazione dei parametri (da implementare)
     private boolean validazioneParametri(DaFareRequest request) {
-        
-        return false;
+        if (request == null || request.getGiocata() == null) return false;
+        String g = request.getGiocata().trim().toLowerCase();
+        boolean giocataOk = g.equals("pari") || g.equals("dispari");
+        boolean numeroOk = request.getNumero() >= 0 && request.getNumero() <= 36;
+        return giocataOk && numeroOk;
     }
 
     /**

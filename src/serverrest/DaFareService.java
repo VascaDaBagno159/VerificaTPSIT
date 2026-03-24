@@ -4,41 +4,34 @@
  */
 package serverrest;
 
-/**
- *
- * @author delfo
- */
 public class DaFareService {
-    
+
     /**
-     * Esegue l'operazione matematica richiesta
-     * 
-     * @param 
-     * @param 
-     * @param 
-     * @return 
-     * @throws IllegalArgumentException se ...
+     * Determina se la giocata "pari"/"dispari" vince sul numero dato.
+     *
+     * @param giocata "pari" oppure "dispari" (case-insensitive)
+     * @param numero  numero estratto, 0–36
+     * @return true se la giocata è vincente, false altrimenti
+     * @throws IllegalArgumentException se i parametri non sono validi
      */
-    public static Boolean logicaDiCalcolo() 
-            throws IllegalArgumentException {
-        
-        // Controllo se i parametri passati sono validi
-                if (!parametriValidi()) {
-            throw new IllegalArgumentException("Operatore non può essere vuoto");
+    public static boolean logicaDiCalcolo(String giocata, int numero) throws IllegalArgumentException {
+        if (!parametriValidi(giocata, numero)) {
+            throw new IllegalArgumentException("Parametri non validi: giocata deve essere 'pari' o 'dispari' e numero tra 0 e 36");
         }
-        
-        try {
-            
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "Opzione non valida. Opzione deve essere DA FARE");
-        }
-        return false; // Placeholder, da sostituire con il risultato della logica di calcolo
+
+        // In roulette europea lo 0 perde sia per pari che per dispari
+        if (numero == 0) return false;
+
+        boolean numeroPari = (numero % 2 == 0);
+        boolean puntataPari = giocata.equalsIgnoreCase("pari");
+        return numeroPari == puntataPari;
     }
 
-    // Metodo di validazione dei parametri (da implementare)
-    private static boolean parametriValidi()
-    {
-        return false;
+    private static boolean parametriValidi(String giocata, int numero) {
+        if (giocata == null) return false;
+        String g = giocata.trim().toLowerCase();
+        boolean giocataOk = g.equals("pari") || g.equals("dispari");
+        boolean numeroOk = numero >= 0 && numero <= 36;
+        return giocataOk && numeroOk;
     }
 }

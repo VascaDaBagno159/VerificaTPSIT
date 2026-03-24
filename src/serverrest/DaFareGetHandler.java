@@ -57,7 +57,7 @@ public class DaFareGetHandler implements HttpHandler {
             int numero = Integer.parseInt(parametri.get("numero"));
             
             // Esegue la logica di calcolo
-            Boolean vittoria = DaFareService.logicaDiCalcolo();
+            Boolean vittoria = DaFareService.logicaDiCalcolo(giocata,numero);
             
             // Crea l'oggetto risposta
             DaFareResponse response = new DaFareResponse(
