@@ -9,9 +9,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,7 @@ import java.util.Map;
  */
 
 
-public class DaFareGetHandler implements HttpHandler {
+public class DaFarePostHandler implements HttpHandler {
     
     // Istanza Gson configurata per pretty printing
     private final Gson gson = new GsonBuilder()
@@ -34,41 +36,44 @@ public class DaFareGetHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         
-        // Verifica che sia una richiesta GET
-        if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-            inviaErrore(exchange, 405, "Metodo non consentito. Usa GET");
+        // Verifica che sia una richiesta POST
+        if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+            inviaErrore(exchange, 405, "Metodo non consentito. Usa POST");
             return;
         }
         
         try {
-            // Estrae i parametri dalla query string
-            Map<String, String> parametri = estraiParametri(exchange.getRequestURI().getQuery());
+            // Legge il body della richiesta
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8)
+            );
             
-              // Validazione parametri
-            if (!parametri.containsKey("giocata") || 
-                !parametri.containsKey("numero")|| 
-                !parametri.containsKey("importo")
-             ) {
-                inviaErrore(exchange, 400, 
-                    "Parametri mancanti. Necessari: operando1, operando2, operatore");
+            // GSON converte automaticamente il JSON in oggetto Java
+            DaFareRequest request = gson.fromJson(reader, DaFareRequest.class);
+            reader.close();
+            
+            // Validazione
+            if (request == null) {
+                inviaErrore(exchange, 400, "Body della richiesta vuoto o non valido");
                 return;
             }
             
-            // Parsing dei valori
-            String giocata = parametri.get("giocata");
-            int numero = Integer.parseInt(parametri.get("numero"));
-            float importo = Float.parseFloat(parametri.get("importo"));
+            if (!validazioneParametri(request)) {
+                inviaErrore(exchange, 400, "Operatore mancante o vuoto");
+                return;
+            };
             
-            // Esegue la logica di calcolo
-            Boolean vittoria = DaFareService.logicaDiCalcolo(giocata,numero,importo);
+            // Chiama la logica di calcolo DA FARE
+            Boolean vittoria = DaFareService.logicaDiCalcolo(
+                request.getGiocata(),
+                request.getNumero()
+            );
             
-            // Crea l'oggetto risposta
-            DaFareResponseV2 response = new DaFareResponseV2(
-                giocata,
-                numero,
-                vittoria,
-                importoGiocato,
-                importoRiscosso
+            // Crea l'oggetto risposta DA FARE
+           DaFareResponse response = new DaFareResponse(
+                request.getGiocata(),
+                request.getNumero(),
+                vittoria
             );
             
             // GSON converte automaticamente l'oggetto Java in JSON
@@ -76,43 +81,24 @@ public class DaFareGetHandler implements HttpHandler {
             
             inviaRisposta(exchange, 200, jsonRisposta);
             
-        } catch (NumberFormatException e) {
-            inviaErrore(exchange, 400, "Operandi non validi. Devono essere numeri");
+        } catch (JsonSyntaxException e) {
+            inviaErrore(exchange, 400, "JSON non valido: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             inviaErrore(exchange, 400, e.getMessage());
         } catch (Exception e) {
             inviaErrore(exchange, 500, "Errore interno del server: " + e.getMessage());
         }
     }
-
     
-    /**
-     * Estrae i parametri dalla query string
-     */
-    private Map<String, String> estraiParametri(String query) {
-        Map<String, String> parametri = new HashMap<>();
-        
-        if (query == null || query.isEmpty()) {
-            return parametri;
-        }
-        
-        String[] coppie = query.split("&");
-        for (String coppia : coppie) {
-            String[] keyValue = coppia.split("=");
-            if (keyValue.length == 2) {
-                try {
-                    String chiave = URLDecoder.decode(keyValue[0], "UTF-8");
-                    String valore = URLDecoder.decode(keyValue[1], "UTF-8");
-                    parametri.put(chiave, valore);
-                } catch (Exception e) {
-                    // Ignora parametri malformati
-                }
-            }
-        }
-        
-        return parametri;
+    // Validazione dei parametri (da implementare)
+    private boolean validazioneParametri(DaFareRequest request) {
+        if (request == null || request.getGiocata() == null) return false;
+        String g = request.getGiocata().trim().toLowerCase();
+        boolean giocataOk = g.equals("pari") || g.equals("dispari");
+        boolean numeroOk = request.getNumero() >= 0 && request.getNumero() <= 36;
+        return giocataOk && numeroOk;
     }
-    
+
     /**
      * Invia una risposta di successo
      */
@@ -136,7 +122,7 @@ public class DaFareGetHandler implements HttpHandler {
     private void inviaErrore(HttpExchange exchange, int codice, String messaggio) 
             throws IOException {
         
-        Map<String, Object> errore = new HashMap<>();
+        Map errore = new HashMap<>();
         errore.put("errore", messaggio);
         errore.put("status", codice);
         
