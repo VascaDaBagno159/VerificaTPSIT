@@ -18,67 +18,43 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
-/**
- *
- * @author delfo
- */
-
-
-public class DaFarePostHandler implements HttpHandler {
+public class DaFarePostHandlerV2 extends DaFarePostHandler implements HttpHandler {
     
-    // Istanza Gson configurata per pretty printing
-    private final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        
-        // Verifica che sia una richiesta POST
         if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
             inviaErrore(exchange, 405, "Metodo non consentito. Usa POST");
             return;
         }
         
-        try {
-            // Legge il body della richiesta
-            BufferedReader reader = new BufferedReader(
-                new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8)
-            );
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
             
-            // GSON converte automaticamente il JSON in oggetto Java
-            DaFareRequest request = gson.fromJson(reader, DaFareRequest.class);
-            reader.close();
-            
-            // Validazione
-            if (request == null) {
-                inviaErrore(exchange, 400, "Body della richiesta vuoto o non valido");
+            DaFareRequestV2 request = gson.fromJson(reader, DaFareRequestV2.class);
+
+            if (!validazioneParametri(request)) {
+                inviaErrore(exchange, 400, "Parametri non validi");
                 return;
             }
             
-            if (!validazioneParametri(request)) {
-                inviaErrore(exchange, 400, "Operatore mancante o vuoto");
-                return;
-            };
-            
-            // Chiama la logica di calcolo DA FARE
-            Boolean vittoria = DaFareService.logicaDiCalcolo(
-                request.getGiocata(),
-                request.getNumero()
-            );
-            
-            // Crea l'oggetto risposta DA FARE
-           DaFareResponse response = new DaFareResponse(
+            boolean vittoria = DaFareServiceV2.logicaDiCalcolo(
                 request.getGiocata(),
                 request.getNumero(),
-                vittoria
+                request.getImporto()
+            );
+
+            float importoGiocato = request.getImporto();
+            
+            DaFareResponseV2 response = new DaFareResponseV2(
+                request.getGiocata(),
+                request.getNumero(),
+                vittoria,
+                importoGiocato
             );
             
-            // GSON converte automaticamente l'oggetto Java in JSON
             String jsonRisposta = gson.toJson(response);
-            
             inviaRisposta(exchange, 200, jsonRisposta);
             
         } catch (JsonSyntaxException e) {
@@ -90,42 +66,31 @@ public class DaFarePostHandler implements HttpHandler {
         }
     }
     
-    // Validazione dei parametri (da implementare)
-    private boolean validazioneParametri(DaFareRequest request) {
+    private boolean validazioneParametri(DaFareRequestV2 request) {
         if (request == null || request.getGiocata() == null) return false;
         String g = request.getGiocata().trim().toLowerCase();
-        boolean giocataOk = g.equals("pari") || g.equals("dispari");
+        boolean giocataOk = g.equals("rosso") || g.equals("nero");
         boolean numeroOk = request.getNumero() >= 0 && request.getNumero() <= 36;
-        return giocataOk && numeroOk;
+        boolean importoOk = request.getImporto() >= 20.00f;
+        return giocataOk && numeroOk && importoOk;
     }
 
-    /**
-     * Invia una risposta di successo
-     */
     private void inviaRisposta(HttpExchange exchange, int codice, String jsonRisposta) 
             throws IOException {
-        
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        
         byte[] bytes = jsonRisposta.getBytes(StandardCharsets.UTF_8);
         exchange.sendResponseHeaders(codice, bytes.length);
-        
-        OutputStream os = exchange.getResponseBody();
-        os.write(bytes);
-        os.close();
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
     }
     
-    /**
-     * Invia una risposta di errore in formato JSON
-     */
     private void inviaErrore(HttpExchange exchange, int codice, String messaggio) 
             throws IOException {
-        
         Map errore = new HashMap<>();
         errore.put("errore", messaggio);
         errore.put("status", codice);
-        
         String jsonErrore = gson.toJson(errore);
         inviaRisposta(exchange, codice, jsonErrore);
     }

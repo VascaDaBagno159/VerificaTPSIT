@@ -34,8 +34,8 @@ public class ServerRest {
             HttpServer server = HttpServer.create(new InetSocketAddress(porta), 0);
             
             // Registra gli handler per gli endpoint
-            server.createContext("/api/v2/roulette/paridispari/post", new DaFarePostHandler());
-            server.createContext("/api/v2/roulette/paridispari/get", new DaFareGetHandler());
+            server.createContext("/api/v2/roulette/colori/post", new DaFarePostHandlerV2());
+            server.createContext("/api/v2/roulette/colori/get", new DaFareGetHandlerV2());
             
             // Endpoint di benvenuto
             server.createContext("/", ServerRest::gestisciBenvenuto);
@@ -51,8 +51,8 @@ public class ServerRest {
             System.out.println("Porta: " + porta);
             System.out.println();
             System.out.println("Endpoint disponibili:");
-            System.out.println("  - POST: http://localhost:" + porta + "/api/v2/roulette/paridispari/post");
-            System.out.println("  - GET:  http://localhost:" + porta + "/api/v2/roulette/paridispari/get");
+            System.out.println("  - POST: http://localhost:" + porta + "/api/v2/roulette/colori/post");
+            System.out.println("  - GET:  http://localhost:" + porta + "/api/v2/roulette/colori/get");
             System.out.println("  - Info: http://localhost:" + porta + "/");
             System.out.println();
             System.out.println();
@@ -80,8 +80,8 @@ public class ServerRest {
         info.put("tecnologia", "Java + GSON");
         
         Map endpoints = new HashMap<>();
-        endpoints.put("POST", "/api/v2/roulette/paridispari/post");
-        endpoints.put("GET", "/api/v2/roulette/paridispari/get?giocata=GIO&numero=Y&importo=X");
+        endpoints.put("POST", "/api/v2/roulette/colori/post");
+        endpoints.put("GET", "/api/v2/roulette/colori/get?giocata=GIO&numero=Y&importo=X");
         info.put("endpoints", endpoints);
         
         String jsonRisposta = gson.toJson(info);

@@ -46,9 +46,7 @@ public class DaFareGetHandler implements HttpHandler {
             
               // Validazione parametri
             if (!parametri.containsKey("giocata") || 
-                !parametri.containsKey("numero")|| 
-                !parametri.containsKey("importo")
-             ) {
+                !parametri.containsKey("numero") ) {
                 inviaErrore(exchange, 400, 
                     "Parametri mancanti. Necessari: operando1, operando2, operatore");
                 return;
@@ -57,18 +55,15 @@ public class DaFareGetHandler implements HttpHandler {
             // Parsing dei valori
             String giocata = parametri.get("giocata");
             int numero = Integer.parseInt(parametri.get("numero"));
-            float importo = Float.parseFloat(parametri.get("importo"));
             
             // Esegue la logica di calcolo
-            Boolean vittoria = DaFareService.logicaDiCalcolo(giocata,numero,importo);
+            Boolean vittoria = DaFareService.logicaDiCalcolo(giocata,numero);
             
             // Crea l'oggetto risposta
-            DaFareResponseV2 response = new DaFareResponseV2(
+            DaFareResponse response = new DaFareResponse(
                 giocata,
                 numero,
-                vittoria,
-                importoGiocato,
-                importoRiscosso
+                vittoria
             );
             
             // GSON converte automaticamente l'oggetto Java in JSON

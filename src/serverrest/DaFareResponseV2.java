@@ -10,7 +10,7 @@ package serverrest;
  */
 public class DaFareResponseV2 extends DaFareResponse {
     private float importoGiocato;
-    private float importoRiscosso;
+    private float importoRiscosso  ;
     
     // Costruttore vuoto necessario per GSON
     public DaFareResponseV2() {
@@ -19,12 +19,11 @@ public class DaFareResponseV2 extends DaFareResponse {
     // Costruttore con parametri
    
     public DaFareResponseV2(String giocata, int numero, boolean vittoria,
-        float importoGiocato,float importoRiscosso) {
+        float importoGiocato) {
          
         super(giocata,numero,vittoria);
         this.importoGiocato = importoGiocato;
-        this.importoRiscosso=importoRiscosso;
-
+         this.importoRiscosso = vittoria ? importoGiocato * 2.0f : 0.0f; //moltiplico per 2 solo se vinco
     }
     
     
@@ -38,8 +37,6 @@ public class DaFareResponseV2 extends DaFareResponse {
         return importoRiscosso;
     }
 
-
-    
     // Setter
    
     public void setImportoGiocato(float importoGiocato) {

@@ -16,68 +16,46 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
-/**
- *
- * @author delfo
- */
-
-
-public class DaFareGetHandler implements HttpHandler {
+public class DaFareGetHandlerV2 extends DaFareGetHandler implements HttpHandler {
     
-    // Istanza Gson configurata per pretty printing
-    private final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        
-        // Verifica che sia una richiesta GET
         if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
             inviaErrore(exchange, 405, "Metodo non consentito. Usa GET");
             return;
         }
         
         try {
-            // Estrae i parametri dalla query string
             Map<String, String> parametri = estraiParametri(exchange.getRequestURI().getQuery());
             
-              // Validazione parametri
             if (!parametri.containsKey("giocata") || 
-                !parametri.containsKey("numero")|| 
-                !parametri.containsKey("importo")
-             ) {
-                inviaErrore(exchange, 400, 
-                    "Parametri mancanti. Necessari: operando1, operando2, operatore");
+                !parametri.containsKey("numero")  || 
+                !parametri.containsKey("importo")) {
+                inviaErrore(exchange, 400, "Parametri mancanti: giocata, numero, importo");
                 return;
             }
             
-            // Parsing dei valori
             String giocata = parametri.get("giocata");
             int numero = Integer.parseInt(parametri.get("numero"));
             float importo = Float.parseFloat(parametri.get("importo"));
             
-            // Esegue la logica di calcolo
-            Boolean vittoria = DaFareService.logicaDiCalcolo(giocata,numero,importo);
+            boolean vittoria = DaFareServiceV2.logicaDiCalcolo(giocata, numero, importo);
+            float importoGiocato = importo;
             
-            // Crea l'oggetto risposta
             DaFareResponseV2 response = new DaFareResponseV2(
                 giocata,
                 numero,
                 vittoria,
-                importoGiocato,
-                importoRiscosso
+                importoGiocato
             );
             
-            // GSON converte automaticamente l'oggetto Java in JSON
             String jsonRisposta = gson.toJson(response);
-            
             inviaRisposta(exchange, 200, jsonRisposta);
             
         } catch (NumberFormatException e) {
-            inviaErrore(exchange, 400, "Operandi non validi. Devono essere numeri");
+            inviaErrore(exchange, 400, "Parametri numerici non validi");
         } catch (IllegalArgumentException e) {
             inviaErrore(exchange, 400, e.getMessage());
         } catch (Exception e) {
@@ -85,17 +63,9 @@ public class DaFareGetHandler implements HttpHandler {
         }
     }
 
-    
-    /**
-     * Estrae i parametri dalla query string
-     */
     private Map<String, String> estraiParametri(String query) {
         Map<String, String> parametri = new HashMap<>();
-        
-        if (query == null || query.isEmpty()) {
-            return parametri;
-        }
-        
+        if (query == null || query.isEmpty()) return parametri;
         String[] coppie = query.split("&");
         for (String coppia : coppie) {
             String[] keyValue = coppia.split("=");
@@ -104,42 +74,28 @@ public class DaFareGetHandler implements HttpHandler {
                     String chiave = URLDecoder.decode(keyValue[0], "UTF-8");
                     String valore = URLDecoder.decode(keyValue[1], "UTF-8");
                     parametri.put(chiave, valore);
-                } catch (Exception e) {
-                    // Ignora parametri malformati
-                }
+                } catch (Exception ignored) { }
             }
         }
-        
         return parametri;
     }
     
-    /**
-     * Invia una risposta di successo
-     */
     private void inviaRisposta(HttpExchange exchange, int codice, String jsonRisposta) 
             throws IOException {
-        
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        
         byte[] bytes = jsonRisposta.getBytes(StandardCharsets.UTF_8);
         exchange.sendResponseHeaders(codice, bytes.length);
-        
-        OutputStream os = exchange.getResponseBody();
-        os.write(bytes);
-        os.close();
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
     }
     
-    /**
-     * Invia una risposta di errore in formato JSON
-     */
     private void inviaErrore(HttpExchange exchange, int codice, String messaggio) 
             throws IOException {
-        
         Map<String, Object> errore = new HashMap<>();
         errore.put("errore", messaggio);
         errore.put("status", codice);
-        
         String jsonErrore = gson.toJson(errore);
         inviaRisposta(exchange, codice, jsonErrore);
     }

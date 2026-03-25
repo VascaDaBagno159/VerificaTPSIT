@@ -4,34 +4,40 @@
  */
 package serverrest;
 
-public class DaFareService {
+import java.util.Set;
+
+public class DaFareServiceV2 {
+
+    private static final Set<Integer> ROSSI = Set.of(
+        1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
+    );
+    private static final Set<Integer> NERI = Set.of(
+        2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35
+    );
 
     /**
-     * Determina se la giocata "pari"/"dispari" vince sul numero dato.
-     *
-     * @param giocata "pari" oppure "dispari" (case-insensitive)
-     * @param numero  numero estratto, 0–36
-     * @return true se la giocata è vincente, false altrimenti
-     * @throws IllegalArgumentException se i parametri non sono validi
+     * Determina se la giocata "ROSSO"/"NERO" vince sul numero dato.
      */
-    public static boolean logicaDiCalcolo(String giocata, int numero) throws IllegalArgumentException {
-        if (!parametriValidi(giocata, numero)) {
-            throw new IllegalArgumentException("Parametri non validi: giocata deve essere 'pari' o 'dispari' e numero tra 0 e 36");
+    public static boolean logicaDiCalcolo(String giocata, int numero, float importo) throws IllegalArgumentException {
+        if (!parametriValidi(giocata, numero, importo)) {
+            throw new IllegalArgumentException("Parametri non validi: giocata deve essere 'ROSSO' o 'NERO', numero 0-36, importo >= 20.00");
         }
 
-        // In roulette europea lo 0 perde sia per pari che per dispari
         if (numero == 0) return false;
 
-        boolean numeroPari = (numero % 2 == 0);
-        boolean puntataPari = giocata.equalsIgnoreCase("pari");
-        return numeroPari == puntataPari;
+        boolean puntataRosso = giocata.equalsIgnoreCase("rosso");
+        boolean numeroRosso = ROSSI.contains(numero);
+        boolean numeroNero = NERI.contains(numero);
+
+        return puntataRosso ? numeroRosso : numeroNero;
     }
 
-    private static boolean parametriValidi(String giocata, int numero) {
+    private static boolean parametriValidi(String giocata, int numero, float importo) {
         if (giocata == null) return false;
         String g = giocata.trim().toLowerCase();
-        boolean giocataOk = g.equals("pari") || g.equals("dispari");
+        boolean giocataOk = g.equals("rosso") || g.equals("nero");
         boolean numeroOk = numero >= 0 && numero <= 36;
-        return giocataOk && numeroOk;
+        boolean importoOk = importo >= 20.00f;
+        return giocataOk && numeroOk && importoOk;
     }
 }
