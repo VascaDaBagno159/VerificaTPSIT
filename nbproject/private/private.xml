@@ -3,6 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareResponse.java</file>
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareRequest.java</file>
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFarePostHandler.java</file>
@@ -14,6 +15,12 @@
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareGetHandlerV2.java</file>
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareService.java</file>
             <file>file:/C:/Users/enryf/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareServiceV2.java</file>
+=======
+            <file>file:/C:/Users/ferri.enrico/Documents/GitHub/VerificaTPSIT/src/serverrest/ServerRest.java</file>
+            <file>file:/C:/Users/ferri.enrico/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareService.java</file>
+            <file>file:/C:/Users/ferri.enrico/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFarePostHandlerV2.java</file>
+            <file>file:/C:/Users/ferri.enrico/Documents/GitHub/VerificaTPSIT/src/serverrest/DaFareGetHandler.java</file>
+>>>>>>> f14ca7dbbb79c1c6188200b59fe60e4b0182fb62
         </group>
     </open-files>
 </project-private>

@@ -29,7 +29,7 @@ public class DaFareServiceV2 {
         boolean numeroRosso = ROSSI.contains(numero);
         boolean numeroNero = NERI.contains(numero);
 
-        return puntataRosso ? numeroRosso : numeroNero;
+        return puntataRosso ? numeroRosso : numeroNero; //condizione ? cosa_fare_se_vero : cosa_fare_se_falso;
     }
 
     private static boolean parametriValidi(String giocata, int numero, float importo) {

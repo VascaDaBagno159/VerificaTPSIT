@@ -34,6 +34,8 @@ public class ServerRest {
             HttpServer server = HttpServer.create(new InetSocketAddress(porta), 0);
             
             // Registra gli handler per gli endpoint
+            server.createContext("/api/roulette/colori/post", new DaFarePostHandler());
+            server.createContext("/api/roulette/colori/get", new DaFareGetHandler());
             server.createContext("/api/v2/roulette/colori/post", new DaFarePostHandlerV2());
             server.createContext("/api/v2/roulette/colori/get", new DaFareGetHandlerV2());
             
